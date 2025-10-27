@@ -1,7 +1,7 @@
 import type { AuthenticationState, SignalDataTypeMap } from '@whiskeysockets/baileys';
-import { initAuthCreds } from '@whiskeysockets/baileys/lib/Utils/auth-utils';
-import { BufferJSON } from '@whiskeysockets/baileys/lib/Utils/generics';
-import { proto } from '@whiskeysockets/baileys/WAProto';
+import { initAuthCreds } from '@whiskeysockets/baileys/lib/Utils/auth-utils.js';
+import { BufferJSON } from '@whiskeysockets/baileys/lib/Utils/generics.js';
+import { proto } from '@whiskeysockets/baileys/WAProto/index.js';
 import type { BaileysAuthStore } from '../core/BaileysAuthStore';
 
 export interface UseBaileysAuthStateOptions {
