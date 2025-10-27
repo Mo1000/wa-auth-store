@@ -12,6 +12,7 @@ Inspired by the `useRedisAuthState` pattern, this library provides a reusable, p
 - **Baileys-Optimized**: Handle both `creds` and `keys` (SignalDataTypeMap) efficiently
 - **Type-Safe**: Full TypeScript support with strict type checking
 - **TTL Support**: Automatic expiration of credentials in Redis
+- **Redis Memory Management**: Automatic LRU (Least Recently Used) eviction with configurable limits to prevent memory overflow
 - **Extensible**: Easy to add support for other ORM adapters or databases
 
 ## Installation
@@ -100,6 +101,7 @@ socket.ev.on('creds.update', saveCreds);
 This package is designed for **multi-session WhatsApp management**, but it works perfectly for single sessions too:
 
 **Multi-Session Example** (manage multiple WhatsApp accounts):
+
 ```typescript
 // Each user gets their own session
 const user1State = await useBaileysAuthState(authStore, 'user-123');
@@ -108,6 +110,7 @@ const user3State = await useBaileysAuthState(authStore, 'user-789');
 ```
 
 **Single Session Example** (one WhatsApp account):
+
 ```typescript
 // Use phone number as session ID for a single account
 const { state, saveCreds } = await useBaileysAuthState(authStore, '1234567890');
@@ -121,6 +124,7 @@ socket.ev.on('creds.update', saveCreds);
 ```
 
 **The session ID is just a unique identifier** - use whatever makes sense for your use case:
+
 - User IDs: `'user-123'`, `'user-456'`
 - Phone numbers: `'1234567890'`, `'9876543210'`
 - Email addresses: `'user@example.com'`
@@ -458,6 +462,7 @@ await memoryManager.stop();
 ### Configuration Recommendations
 
 **Small deployments (< 100 users):**
+
 ```typescript
 {
   maxMemoryBytes: 512 * 1024 * 1024, // 512MB
@@ -467,6 +472,7 @@ await memoryManager.stop();
 ```
 
 **Medium deployments (100-1000 users):**
+
 ```typescript
 {
   maxMemoryBytes: 2 * 1024 * 1024 * 1024, // 2GB
@@ -476,6 +482,7 @@ await memoryManager.stop();
 ```
 
 **Large deployments (1000+ users):**
+
 ```typescript
 {
   maxMemoryBytes: 8 * 1024 * 1024 * 1024, // 8GB
