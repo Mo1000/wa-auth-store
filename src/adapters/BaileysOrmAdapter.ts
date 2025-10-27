@@ -10,6 +10,22 @@ interface CredentialEntity {
   updatedAt: Date;
 }
 
+const getStringifyData = (data: unknown) => {
+  try {
+    return JSON.stringify(data, BufferJSON.replacer);
+  } catch (error) {
+    return '{}';
+  }
+};
+
+const getParseData = (data: unknown) => {
+  try {
+    return JSON.parse(getStringifyData(data), BufferJSON.reviver);
+  } catch (error) {
+    return {};
+  }
+};
+
 /**
  * Base class for ORM-based Baileys credential storage
  * Supports MikroORM with PostgreSQL, MySQL, SQLite, etc.
@@ -36,11 +52,11 @@ export class BaileysOrmAdapter {
     }
 
     if (credential.creds !== undefined) {
-      row.creds = JSON.parse(JSON.stringify(credential.creds, BufferJSON.replacer));
+      row.creds = getParseData(credential.creds);
     }
 
     if (credential.keys !== undefined) {
-      row.keys = JSON.parse(JSON.stringify(credential.keys, BufferJSON.replacer));
+      row.keys = getParseData(credential.keys);
     }
 
     await em.persistAndFlush(row);
@@ -57,10 +73,35 @@ export class BaileysOrmAdapter {
       return null;
     }
 
+    const getCred = () => {
+      try {
+        if (!row.creds) {
+          return {};
+        }
+        return getParseData(row.creds);
+      } catch (error) {
+        return {};
+      }
+    };
+    const getKeys = () => {
+      try {
+        if (!row.keys) {
+          return {};
+        }
+        return getParseData(row.keys);
+      } catch (error) {
+        return {};
+      }
+    };
+
+    if (!row.keys) {
+      row.keys = {};
+    }
+
     return {
       sessionId,
-      creds: row.creds,
-      keys: row.keys,
+      creds: getCred(),
+      keys: getKeys(),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };
@@ -71,10 +112,10 @@ export class BaileysOrmAdapter {
    */
   async deleteCreds(sessionId: string): Promise<void> {
     const em = this.em.fork();
-    const row = (await em.findOne(this.entityClass, { sessionId })) as CredentialEntity | null;
+    const row = (await em.nativeDelete(this.entityClass, { sessionId })) as number;
 
-    if (row) {
-      await em.removeAndFlush(row);
+    if (row > 0) {
+      return;
     }
   }
 
@@ -95,7 +136,7 @@ export class BaileysOrmAdapter {
       const field = `${type}-${id}`;
       const value = row.keys[field];
       if (value) {
-        result[id] = value;
+        result[id] = getParseData(value);
       }
     }
 
