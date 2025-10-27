@@ -95,6 +95,37 @@ const { socket } = makeWASocket({
 socket.ev.on('creds.update', saveCreds);
 ```
 
+### Session ID: Multi-Session or Single Session
+
+This package is designed for **multi-session WhatsApp management**, but it works perfectly for single sessions too:
+
+**Multi-Session Example** (manage multiple WhatsApp accounts):
+```typescript
+// Each user gets their own session
+const user1State = await useBaileysAuthState(authStore, 'user-123');
+const user2State = await useBaileysAuthState(authStore, 'user-456');
+const user3State = await useBaileysAuthState(authStore, 'user-789');
+```
+
+**Single Session Example** (one WhatsApp account):
+```typescript
+// Use phone number as session ID for a single account
+const { state, saveCreds } = await useBaileysAuthState(authStore, '1234567890');
+
+const { socket } = makeWASocket({
+  auth: state,
+  printQRInTerminal: true,
+});
+
+socket.ev.on('creds.update', saveCreds);
+```
+
+**The session ID is just a unique identifier** - use whatever makes sense for your use case:
+- User IDs: `'user-123'`, `'user-456'`
+- Phone numbers: `'1234567890'`, `'9876543210'`
+- Email addresses: `'user@example.com'`
+- Custom identifiers: `'whatsapp-bot-1'`, `'support-team'`
+
 ### Manual Usage with Redis Only
 
 ```typescript
