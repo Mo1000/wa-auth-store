@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-10-27
+
+### Added
+
+- **Extended `BaileysRedisAdapter.setKeys()`**:
+  - Now accepts optional `options?: { ttl?: number }` parameter
+  - Sets Redis expiration on keys hash when TTL is provided
+  - Maintains backward compatibility with existing code
+
+- **Extended `BaileysAuthStore.setKeys()`**:
+  - Now accepts optional `options?: { ttl?: number }` parameter
+  - Passes TTL configuration to Redis adapter
+
+  - **TTL Support for Keys**:
+  - Extended `setKeys()` to accept TTL options
+  - Keys now expire with the same TTL as credentials
+  - Automatic TTL propagation in `useBaileysAuthState` helper
+  - Consistent expiration for both credentials and keys
+
 ## [0.3.0] - 2025-10-27
 
 ### Added
@@ -120,7 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Migration Guide
 
-### From 0.2.x to 0.3.0
+### From 0.2.x to 0.3.1
 
 To enable Redis memory management:
 
@@ -130,20 +149,16 @@ import Redis from 'ioredis';
 
 const redis = new Redis();
 
-const { state, saveCreds, memoryManager } = await useBaileysAuthState(
-  authStore,
-  sessionId,
-  {
-    // New: Add memory management configuration
-    redisMemoryConfig: {
-      maxMemoryBytes: 1024 * 1024 * 1024,  // 1GB
-      evictionThreshold: 80,
-      ttlInactivity: 7 * 24 * 60 * 60,
-      checkIntervalMs: 5 * 60 * 1000,
-    },
-    redis: redis,
-  }
-);
+const { state, saveCreds, memoryManager } = await useBaileysAuthState(authStore, sessionId, {
+  // New: Add memory management configuration
+  redisMemoryConfig: {
+    maxMemoryBytes: 1024 * 1024 * 1024, // 1GB
+    evictionThreshold: 80,
+    ttlInactivity: 7 * 24 * 60 * 60,
+    checkIntervalMs: 5 * 60 * 1000,
+  },
+  redis: redis,
+});
 
 // Don't forget to stop the memory manager on shutdown
 process.on('SIGINT', async () => {
