@@ -1,6 +1,6 @@
 {
   "name": "wa-auth-store",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Manage and synchronize WhatsApp Baileys credentials between Redis and a persistent database",
   "type": "module",
   "main": "./dist/index.js",
