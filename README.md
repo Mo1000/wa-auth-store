@@ -16,22 +16,49 @@ Inspired by the `useRedisAuthState` pattern, this library provides a reusable, p
 
 ## Installation
 
+### Default Installation
+
 ```bash
-npm install wa-auth-store ioredis
-npm install -D @mikro-orm/core @mikro-orm/postgresql
+npm install wa-auth-store
 ```
 
-### Optional: Other Database Drivers
+This automatically installs:
 
-For MySQL:
+- `ioredis` - Redis client
+- `@mikro-orm/core` - ORM framework
+
+### Optional: Choose Your Database Driver
+
+By default, no specific database driver is installed. Choose one based on your database:
+
+**For PostgreSQL:**
+
 ```bash
-npm install -D @mikro-orm/mysql
+npm install @mikro-orm/postgresql
 ```
 
-For SQLite:
+**For MySQL:**
+
 ```bash
-npm install -D @mikro-orm/sqlite
+npm install @mikro-orm/mysql
 ```
+
+**For SQLite:**
+
+```bash
+npm install @mikro-orm/sqlite
+```
+
+### Summary
+
+| Package                 | Installed | Why                         |
+| ----------------------- | --------- | --------------------------- |
+| `wa-auth-store`         | Auto      | The library itself          |
+| `ioredis`               | Auto      | Redis operations (required) |
+| `@mikro-orm/core`       | Auto      | Database ORM (required)     |
+| `@mikro-orm/postgresql` | Optional  | PostgreSQL driver           |
+| `@mikro-orm/mysql`      | Optional  | MySQL driver                |
+| `@mikro-orm/sqlite`     | Optional  | SQLite driver               |
 
 ## Quick Start
 
@@ -40,7 +67,12 @@ npm install -D @mikro-orm/sqlite
 The simplest way to integrate with Baileys - just pass the state directly:
 
 ```typescript
-import { BaileysAuthStore, BaileysRedisAdapter, BaileysOrmAdapter, useBaileysAuthState } from 'wa-auth-store';
+import {
+  BaileysAuthStore,
+  BaileysRedisAdapter,
+  BaileysOrmAdapter,
+  useBaileysAuthState,
+} from 'wa-auth-store';
 import { makeWASocket } from '@whiskeysockets/baileys';
 
 // Setup
@@ -86,7 +118,10 @@ const credential = await authStore.getCreds('session-123');
 console.log(credential);
 
 // Get specific keys
-const appStateKeys = await authStore.getKeys('session-123', 'app-state-sync-key', ['key-id-1', 'key-id-2']);
+const appStateKeys = await authStore.getKeys('session-123', 'app-state-sync-key', [
+  'key-id-1',
+  'key-id-2',
+]);
 
 // Delete session
 await authStore.deleteCreds('session-123');
@@ -118,13 +153,17 @@ const ormAdapter = new BaileysOrmAdapter(orm.em, CredentialsEntity);
 const authStore = new BaileysAuthStore(redisAdapter, ormAdapter);
 
 // Save credentials (syncs to both Redis and PostgreSQL)
-await authStore.saveCreds('session-123', {
-  creds: authenticationCreds,
-  keys: signalDataMap,
-}, {
-  syncToDatabase: true,
-  ttl: 3600, // 1 hour TTL in Redis
-});
+await authStore.saveCreds(
+  'session-123',
+  {
+    creds: authenticationCreds,
+    keys: signalDataMap,
+  },
+  {
+    syncToDatabase: true,
+    ttl: 3600, // 1 hour TTL in Redis
+  }
+);
 
 // Retrieve - prefers Redis, falls back to database
 const credential = await authStore.getCreds('session-123');
@@ -181,6 +220,7 @@ const { state, saveCreds } = await useBaileysAuthState(authStore, sessionId, opt
 ```
 
 **Parameters:**
+
 - `authStore` (BaileysAuthStore) - Initialized auth store
 - `sessionId` (string) - Unique session identifier
 - `options` (optional):
@@ -188,6 +228,7 @@ const { state, saveCreds } = await useBaileysAuthState(authStore, sessionId, opt
   - `syncToDatabase?: boolean` - Sync to database (default: true)
 
 **Returns:**
+
 ```typescript
 {
   state: AuthenticationState,      // Ready for Baileys
@@ -196,6 +237,7 @@ const { state, saveCreds } = await useBaileysAuthState(authStore, sessionId, opt
 ```
 
 **Example:**
+
 ```typescript
 const { state, saveCreds } = await useBaileysAuthState(authStore, 'session-123');
 

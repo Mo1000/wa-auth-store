@@ -1,0 +1,10 @@
+src/
+.eslintrc.json
+.prettierrc.json
+vitest.config.ts
+tsconfig.json
+*.md
+!README.md
+.git
+.gitignore
+node_modules
