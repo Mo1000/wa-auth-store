@@ -1,5 +1,6 @@
 import type { EntityManager } from '@mikro-orm/core';
 import type { BaileysCredential } from '../types/index.js';
+import { BufferJSON } from '@whiskeysockets/baileys';
 
 interface CredentialEntity {
   sessionId: string;
@@ -25,10 +26,7 @@ export class BaileysOrmAdapter {
   /**
    * Save credentials to database
    */
-  async saveCreds(
-    sessionId: string,
-    credential: Partial<BaileysCredential>
-  ): Promise<void> {
+  async saveCreds(sessionId: string, credential: Partial<BaileysCredential>): Promise<void> {
     const em = this.em.fork();
 
     let row = (await em.findOne(this.entityClass, { sessionId })) as CredentialEntity | null;
@@ -38,11 +36,11 @@ export class BaileysOrmAdapter {
     }
 
     if (credential.creds !== undefined) {
-      row.creds = credential.creds;
+      row.creds = JSON.parse(JSON.stringify(credential.creds, BufferJSON.replacer));
     }
 
     if (credential.keys !== undefined) {
-      row.keys = credential.keys;
+      row.keys = JSON.parse(JSON.stringify(credential.keys, BufferJSON.replacer));
     }
 
     await em.persistAndFlush(row);
@@ -83,11 +81,7 @@ export class BaileysOrmAdapter {
   /**
    * Get specific keys from database
    */
-  async getKeys(
-    sessionId: string,
-    type: string,
-    ids: string[]
-  ): Promise<Record<string, unknown>> {
+  async getKeys(sessionId: string, type: string, ids: string[]): Promise<Record<string, unknown>> {
     const em = this.em.fork();
     const row = (await em.findOne(this.entityClass, { sessionId })) as CredentialEntity | null;
 
@@ -111,10 +105,7 @@ export class BaileysOrmAdapter {
   /**
    * Set specific keys in database
    */
-  async setKeys(
-    sessionId: string,
-    data: Record<string, Record<string, unknown>>
-  ): Promise<void> {
+  async setKeys(sessionId: string, data: Record<string, Record<string, unknown>>): Promise<void> {
     const em = this.em.fork();
 
     let row = (await em.findOne(this.entityClass, { sessionId })) as CredentialEntity | null;

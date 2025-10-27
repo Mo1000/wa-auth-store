@@ -46,7 +46,7 @@ export class BaileysRedisAdapter {
     if (credential.keys) {
       const keysData = Object.entries(credential.keys).map(([field, value]) => [
         field,
-        JSON.stringify(value),
+        JSON.stringify(value, BufferJSON.replacer),
       ]);
 
       if (keysData.length > 0) {
@@ -79,13 +79,13 @@ export class BaileysRedisAdapter {
     const credential: Partial<BaileysCredential> = {};
 
     if (credsData) {
-      credential.creds = JSON.parse(credsData);
+      credential.creds = JSON.parse(credsData, BufferJSON.reviver);
     }
 
     if (Object.keys(keysData).length > 0) {
       credential.keys = {};
       for (const [field, value] of Object.entries(keysData)) {
-        credential.keys[field] = JSON.parse(value);
+        credential.keys[field] = JSON.parse(value, BufferJSON.reviver);
       }
     }
 
@@ -116,7 +116,7 @@ export class BaileysRedisAdapter {
     ids.forEach((id, i) => {
       const value = values[i];
       if (value && typeof value === 'string') {
-        result[id] = JSON.parse(value);
+        result[id] = JSON.parse(value, BufferJSON.reviver);
       }
     });
 
