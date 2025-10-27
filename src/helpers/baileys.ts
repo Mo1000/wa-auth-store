@@ -3,15 +3,21 @@ import { initAuthCreds } from '@whiskeysockets/baileys/lib/Utils/auth-utils.js';
 import { BufferJSON } from '@whiskeysockets/baileys/lib/Utils/generics.js';
 import { proto } from '@whiskeysockets/baileys/WAProto/index.js';
 import type { BaileysAuthStore } from '../core/BaileysAuthStore';
+import type { RedisMemoryConfig } from '../types/index.js';
+import { RedisMemoryManager } from '../managers/RedisMemoryManager.js';
+import type Redis from 'ioredis';
 
 export interface UseBaileysAuthStateOptions {
   ttl?: number; // TTL in seconds for Redis
   syncToDatabase?: boolean; // Sync to database (default: true)
+  redisMemoryConfig?: RedisMemoryConfig; // Redis memory management config
+  redis?: Redis; // Redis client for memory management (required if redisMemoryConfig is provided)
 }
 
 export interface UseBaileysAuthStateReturn {
   state: AuthenticationState;
   saveCreds: () => Promise<void>;
+  memoryManager?: RedisMemoryManager; // Memory manager instance if configured
 }
 
 /**
@@ -20,14 +26,28 @@ export interface UseBaileysAuthStateReturn {
  * This helper handles all the complexity of managing credentials and keys,
  * so you can just pass the state directly to Baileys without worrying about storage.
  *
+ * Optionally enables automatic Redis memory management with LRU eviction of unused sessions.
+ *
  * @param authStore - BaileysAuthStore instance
  * @param sessionId - Session identifier
  * @param options - Optional configuration
- * @returns Object with state and saveCreds function ready for Baileys
+ * @returns Object with state, saveCreds function, and optional memoryManager ready for Baileys
  *
  * @example
  * ```typescript
+ * // Basic usage without memory management
  * const { state, saveCreds } = await useBaileysAuthState(authStore, 'session-123');
+ *
+ * // With automatic Redis memory management
+ * const { state, saveCreds, memoryManager } = await useBaileysAuthState(authStore, 'session-123', {
+ *   redisMemoryConfig: {
+ *     maxMemoryBytes: 1024 * 1024 * 1024, // 1GB limit
+ *     evictionThreshold: 80, // Evict when 80% full
+ *     ttlInactivity: 7 * 24 * 60 * 60, // Delete unused sessions after 7 days
+ *     checkIntervalMs: 5 * 60 * 1000, // Check every 5 minutes
+ *   },
+ *   redis: redisClient,
+ * });
  *
  * const { socket, state: baileysState } = makeWASocket({
  *   auth: state,
@@ -38,6 +58,13 @@ export interface UseBaileysAuthStateReturn {
  * socket.ev.on('creds.update', async () => {
  *   await saveCreds();
  * });
+ *
+ * // Cleanup on shutdown
+ * process.on('SIGINT', async () => {
+ *   if (memoryManager) {
+ *     await memoryManager.stop();
+ *   }
+ * });
  * ```
  */
 export async function useBaileysAuthState(
@@ -45,11 +72,22 @@ export async function useBaileysAuthState(
   sessionId: string,
   options?: UseBaileysAuthStateOptions
 ): Promise<UseBaileysAuthStateReturn> {
+  // Initialize memory manager if configured
+  let memoryManager: RedisMemoryManager | undefined;
+  if (options?.redisMemoryConfig && options?.redis) {
+    memoryManager = new RedisMemoryManager(options.redis, options.redisMemoryConfig);
+    await memoryManager.start();
+  }
+
   // Load existing credentials or initialize new ones
   const getCreds = async () => {
     const credential = await authStore.getCreds(sessionId);
     if (credential?.creds) {
-      return credential.creds as any;
+      // Track access for memory management
+      if (memoryManager) {
+        await memoryManager.trackAccess(sessionId);
+      }
+      return credential.creds;
     }
     return initAuthCreds();
   };
@@ -70,13 +108,18 @@ export async function useBaileysAuthState(
         syncToDatabase: options?.syncToDatabase !== false,
       }
     );
+
+    // Track access for memory management
+    if (memoryManager) {
+      await memoryManager.trackAccess(sessionId);
+    }
   };
 
   /**
    * Authentication state with get/set for keys
    */
   const state: AuthenticationState = {
-    creds,
+    creds: creds as AuthenticationState['creds'],
     keys: {
       /**
        * Get multiple keys from Redis (with database fallback)
@@ -89,18 +132,21 @@ export async function useBaileysAuthState(
         // Get keys from store (Redis first, then database)
         const keysData = await authStore.getKeys(sessionId, type, ids);
 
+        // Track access for memory management
+        if (memoryManager) {
+          await memoryManager.trackAccess(sessionId);
+        }
+
         // Parse and convert keys
         for (const id of ids) {
           const value = keysData[id];
           if (value) {
-            let parsed: any = value;
-
             // Special handling for app-state-sync-key
             if (type === 'app-state-sync-key') {
-              parsed = proto.Message.AppStateSyncKeyData.create(value as any);
+              result[id] = proto.Message.AppStateSyncKeyData.create(value) as unknown as SignalDataTypeMap[typeof type];
+            } else {
+              result[id] = value as SignalDataTypeMap[typeof type];
             }
-
-            result[id] = parsed;
           }
         }
 
@@ -129,6 +175,11 @@ export async function useBaileysAuthState(
 
         // Save to both Redis and database
         await authStore.setKeys(sessionId, keysToStore);
+
+        // Track access for memory management
+        if (memoryManager) {
+          await memoryManager.trackAccess(sessionId);
+        }
       },
     },
   };
@@ -136,5 +187,6 @@ export async function useBaileysAuthState(
   return {
     state,
     saveCreds,
+    memoryManager,
   };
 }

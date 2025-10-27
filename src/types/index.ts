@@ -30,3 +30,23 @@ export interface GenericCredential {
   createdAt: Date;
   updatedAt: Date;
 }
+
+/**
+ * Redis memory management configuration
+ */
+export interface RedisMemoryConfig {
+  maxMemoryBytes?: number; // Max memory in bytes (default: 1GB)
+  evictionThreshold?: number; // Trigger eviction at % of max (default: 80)
+  ttlInactivity?: number; // Delete if unused for X seconds (default: 7 days)
+  checkIntervalMs?: number; // Check memory usage interval (default: 5 minutes)
+}
+
+/**
+ * Session access metadata for LRU tracking
+ */
+export interface SessionAccessMetadata {
+  sessionId: string;
+  lastAccess: number; // Unix timestamp
+  accessCount: number;
+  estimatedSize: number; // Bytes
+}

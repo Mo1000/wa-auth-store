@@ -378,6 +378,112 @@ export class CustomOrmAdapter extends BaileysOrmAdapter {
 }
 ```
 
+## Redis Memory Management (LRU Eviction)
+
+For production environments with hundreds or thousands of users, Redis memory can quickly become saturated. The `RedisMemoryManager` implements intelligent LRU (Least Recently Used) eviction to keep Redis within a controlled memory range.
+
+### Features
+
+- **Automatic Memory Monitoring**: Periodically checks Redis memory usage
+- **LRU Eviction**: Automatically removes least-recently-used sessions when memory threshold is exceeded
+- **Inactivity Cleanup**: Removes sessions that haven't been accessed for a configurable period
+- **Graceful Fallback**: Evicted credentials are automatically retrieved from PostgreSQL on next login
+- **Configurable Limits**: Set max memory, eviction threshold, and inactivity timeout
+
+### Configuration
+
+```typescript
+import { RedisMemoryManager } from 'wa-auth-store';
+
+const memoryConfig = {
+  maxMemoryBytes: 1024 * 1024 * 1024, // 1GB (default)
+  evictionThreshold: 80, // Trigger eviction at 80% (default)
+  ttlInactivity: 7 * 24 * 60 * 60, // 7 days (default)
+  checkIntervalMs: 5 * 60 * 1000, // Check every 5 minutes (default)
+};
+
+const memoryManager = new RedisMemoryManager(redisClient, memoryConfig);
+await memoryManager.start();
+```
+
+### Usage with BaileysRedisAdapter
+
+```typescript
+import { BaileysRedisAdapter, RedisMemoryManager } from 'wa-auth-store';
+
+const redisAdapter = new BaileysRedisAdapter('redis://localhost:6379');
+const memoryManager = new RedisMemoryManager(redisAdapter.redis, {
+  maxMemoryBytes: 2 * 1024 * 1024 * 1024, // 2GB
+  evictionThreshold: 75, // Evict at 75%
+  ttlInactivity: 3 * 24 * 60 * 60, // 3 days
+});
+
+await memoryManager.start();
+
+// Track access on every credential operation
+await memoryManager.trackAccess(sessionId, estimatedSize);
+
+// Get memory statistics
+const stats = await memoryManager.getStats();
+console.log(stats);
+// {
+//   memoryUsage: { usedBytes: 500000000, maxBytes: 2147483648, percentUsed: 23.3 },
+//   totalSessions: 1250,
+//   sessionMetadata: [...]
+// }
+
+// Stop monitoring when done
+await memoryManager.stop();
+```
+
+### How It Works
+
+1. **Access Tracking**: Each time a credential is accessed, the manager records:
+   - Last access timestamp
+   - Access count
+   - Estimated size in bytes
+
+2. **Memory Monitoring**: Every `checkIntervalMs`, the manager:
+   - Checks current Redis memory usage
+   - If usage > `evictionThreshold`, triggers LRU eviction
+   - Removes sessions not accessed for `ttlInactivity` seconds
+
+3. **LRU Eviction**: Sessions are sorted by last access time and removed oldest-first until memory drops below threshold
+
+4. **Fallback**: When a session is needed again:
+   - If not in Redis (evicted), it's retrieved from PostgreSQL
+   - Automatically reloaded into Redis
+   - Access tracking resumes
+
+### Configuration Recommendations
+
+**Small deployments (< 100 users):**
+```typescript
+{
+  maxMemoryBytes: 512 * 1024 * 1024, // 512MB
+  evictionThreshold: 85,
+  ttlInactivity: 14 * 24 * 60 * 60, // 14 days
+}
+```
+
+**Medium deployments (100-1000 users):**
+```typescript
+{
+  maxMemoryBytes: 2 * 1024 * 1024 * 1024, // 2GB
+  evictionThreshold: 80,
+  ttlInactivity: 7 * 24 * 60 * 60, // 7 days
+}
+```
+
+**Large deployments (1000+ users):**
+```typescript
+{
+  maxMemoryBytes: 8 * 1024 * 1024 * 1024, // 8GB
+  evictionThreshold: 75,
+  ttlInactivity: 3 * 24 * 60 * 60, // 3 days
+}
+```
+
 ## Development
 
 ### Setup
