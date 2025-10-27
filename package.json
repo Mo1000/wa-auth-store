@@ -7,7 +7,7 @@
   "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Mo1000/wa-auth-store.git"
+    "url": "git+https://github.com/Mo1000/wa-auth-store.git"
   },
   "author": "Amos Landry",
   "license": "MIT",
