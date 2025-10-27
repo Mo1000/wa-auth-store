@@ -173,8 +173,10 @@ export async function useBaileysAuthState(
           }
         }
 
-        // Save to both Redis and database
-        await authStore.setKeys(sessionId, keysToStore);
+        // Save to both Redis and database with same TTL as credentials
+        await authStore.setKeys(sessionId, keysToStore, {
+          ttl: options?.ttl,
+        });
 
         // Track access for memory management
         if (memoryManager) {

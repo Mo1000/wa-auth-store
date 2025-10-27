@@ -126,7 +126,11 @@ export class BaileysRedisAdapter {
   /**
    * Set specific keys in Redis
    */
-  async setKeys(sessionId: string, data: Record<string, Record<string, unknown>>): Promise<void> {
+  async setKeys(
+    sessionId: string,
+    data: Record<string, Record<string, unknown>>,
+    options?: { ttl?: number }
+  ): Promise<void> {
     const { KEYS: keysKey } = getRedisKeyWhatsapp(sessionId);
     const ops: Record<string, string> = {};
 
@@ -144,6 +148,11 @@ export class BaileysRedisAdapter {
 
     if (Object.keys(ops).length > 0) {
       await this.redis.hset(keysKey, ops);
+
+      // Set TTL if provided
+      if (options?.ttl) {
+        await this.redis.expire(keysKey, options.ttl);
+      }
     }
   }
 

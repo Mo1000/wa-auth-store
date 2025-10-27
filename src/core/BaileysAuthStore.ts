@@ -73,7 +73,7 @@ export class BaileysAuthStore {
     if (missing.length > 0 && this.ormAdapter) {
       const dbResult = await this.ormAdapter.getKeys(sessionId, type, missing);
 
-      // Cache missing keys in Redis
+      // Cache missing keys in Redis (no TTL for database cache warming)
       if (Object.keys(dbResult).length > 0) {
         const keysToSet: Record<string, Record<string, unknown>> = {};
         keysToSet[type] = dbResult;
@@ -91,9 +91,10 @@ export class BaileysAuthStore {
    */
   async setKeys(
     sessionId: string,
-    data: Record<string, Record<string, unknown>>
+    data: Record<string, Record<string, unknown>>,
+    options?: { ttl?: number }
   ): Promise<void> {
-    await this.redisAdapter.setKeys(sessionId, data);
+    await this.redisAdapter.setKeys(sessionId, data, options);
 
     if (this.ormAdapter) {
       await this.ormAdapter.setKeys(sessionId, data);
