@@ -11,12 +11,14 @@ The library abstracts your existing `useRedisAuthState` pattern into a reusable,
 ## What Was Delivered
 
 ### 1. Core Library Code
+
 - ✅ **BaileysRedisAdapter** - Redis credential management
 - ✅ **BaileysOrmAdapter** - MikroORM database persistence
 - ✅ **BaileysAuthStore** - Main orchestrator with hybrid caching
 - ✅ **Type definitions** - Full TypeScript support
 
 ### 2. Configuration Files
+
 - ✅ `package.json` - NPM package configuration
 - ✅ `tsconfig.json` - TypeScript compiler options
 - ✅ `.eslintrc.json` - Code linting rules
@@ -25,6 +27,7 @@ The library abstracts your existing `useRedisAuthState` pattern into a reusable,
 - ✅ `.gitignore` - Git ignore patterns
 
 ### 3. Documentation
+
 - ✅ `README.md` - Complete API documentation with examples
 - ✅ `SETUP.md` - Detailed setup and integration guide
 - ✅ `QUICK_START.md` - 30-second quick reference
@@ -32,11 +35,13 @@ The library abstracts your existing `useRedisAuthState` pattern into a reusable,
 - ✅ `PROJECT_COMPLETE.md` - This file
 
 ### 4. Testing
+
 - ✅ `src/__tests__/BaileysAuthStore.test.ts` - 6 comprehensive tests
 - ✅ All tests passing (6/6)
 - ✅ Test coverage for all major operations
 
 ### 5. Build Output
+
 - ✅ `dist/` - Compiled JavaScript
 - ✅ Type definitions (`.d.ts` files)
 - ✅ Source maps for debugging
@@ -46,16 +51,16 @@ The library abstracts your existing `useRedisAuthState` pattern into a reusable,
 
 ## Project Statistics
 
-| Metric | Value |
-|--------|-------|
-| Source Files | 7 |
-| Test Files | 1 |
-| Config Files | 6 |
-| Documentation Files | 5 |
-| Total Lines of Code | ~800 |
-| Test Coverage | 6/6 passing |
-| Build Status | ✅ Success |
-| TypeScript Errors | 0 |
+| Metric              | Value       |
+| ------------------- | ----------- |
+| Source Files        | 7           |
+| Test Files          | 1           |
+| Config Files        | 6           |
+| Documentation Files | 5           |
+| Total Lines of Code | ~800        |
+| Test Coverage       | 6/6 passing |
+| Build Status        | ✅ Success  |
+| TypeScript Errors   | 0           |
 
 ---
 
@@ -94,29 +99,34 @@ wa-auth-store/
 ## Key Features Implemented
 
 ### ✅ Hybrid Caching Strategy
+
 ```
 Request → Redis (fast) → Database (fallback) → Cache result
 ```
 
 ### ✅ Baileys-Optimized
+
 - Handles `AuthenticationCreds` (creds)
 - Manages `SignalDataTypeMap` (keys)
 - Supports TTL expiration
 - Efficient key-value operations
 
 ### ✅ Type-Safe
+
 - Full TypeScript support
 - Strict mode enabled
 - Proper interface definitions
 - Type exports for consumers
 
 ### ✅ Production-Ready
+
 - Error handling
 - Async/await patterns
 - Resource cleanup
 - Connection management
 
 ### ✅ Extensible
+
 - Abstract ORM adapter
 - Easy to add new databases
 - Plugin-friendly design
@@ -178,12 +188,14 @@ Request → Redis (fast) → Database (fallback) → Cache result
 ### With Your Existing Code
 
 Your `useRedisAuthState` implementation:
+
 ```typescript
 // Before: In your project
 const { state, saveCreds } = await useRedisAuthState(redis, sessionId);
 ```
 
 Becomes:
+
 ```typescript
 // After: Using wa-auth-store
 const authStore = new BaileysAuthStore(redisAdapter, ormAdapter);
@@ -227,9 +239,11 @@ Duration: 178ms
 ## Dependencies
 
 ### Production
+
 - **ioredis** (^5.3.0) - Redis client library
 
 ### Development
+
 - **@mikro-orm/core** (^5.9.0) - ORM framework
 - **@mikro-orm/postgresql** (^5.9.0) - PostgreSQL driver
 - **typescript** (^5.3.2) - Type checking
@@ -239,6 +253,7 @@ Duration: 178ms
 - **ts-node-dev** (^2.0.0) - Development server
 
 ### Optional
+
 - **@mikro-orm/mysql** - MySQL support
 - **@mikro-orm/sqlite** - SQLite support
 
@@ -287,12 +302,14 @@ pnpm run format
 ## Next Steps for Integration
 
 ### Step 1: Install in Your Project
+
 ```bash
 cd /Users/amoslandry/Documents/professionnel/02-Smarttco/wa-session/whatsapp-recaller
 npm install ../wa-auth-store
 ```
 
 ### Step 2: Create Credentials Entity
+
 ```typescript
 // src/lib/entities/credentials.entity.ts
 import { Entity, PrimaryKey, Property, Index, Unique } from '@mikro-orm/core';
@@ -322,6 +339,7 @@ export class CredentialsEntity {
 ```
 
 ### Step 3: Replace useRedisAuthState
+
 ```typescript
 import { BaileysAuthStore, BaileysRedisAdapter, BaileysOrmAdapter } from 'wa-auth-store';
 
@@ -333,6 +351,7 @@ const authStore = new BaileysAuthStore(redisAdapter, ormAdapter);
 ```
 
 ### Step 4: Test Integration
+
 ```bash
 pnpm run test
 ```
@@ -346,6 +365,16 @@ When ready to publish:
 ```bash
 # Update version in package.json
 # npm version patch|minor|major
+
+# patch for example
+npm version patch( will update package.json from 0.4.0 to 0.4.1)
+
+
+# minor for example
+npm version minor( will update package.json from 0.4.0 to 0.5.0)
+
+# major for example
+npm version major( will update package.json from 0.4.0 to 1.0.0)
 
 # Build
 pnpm run build
@@ -362,6 +391,7 @@ npm publish --registry https://your-registry.com
 ## Comparison: Before vs After
 
 ### Before (useRedisAuthState)
+
 - ❌ Tied to your project
 - ❌ Hard to test in isolation
 - ❌ Difficult to reuse
@@ -369,6 +399,7 @@ npm publish --registry https://your-registry.com
 - ❌ No documentation
 
 ### After (wa-auth-store)
+
 - ✅ Standalone library
 - ✅ Comprehensive tests (6/6 passing)
 - ✅ Reusable in any project
@@ -381,27 +412,27 @@ npm publish --registry https://your-registry.com
 
 ## Support & Documentation
 
-| Document | Purpose |
-|----------|---------|
-| **README.md** | Complete API reference with examples |
-| **QUICK_START.md** | 30-second quick reference |
-| **SETUP.md** | Detailed setup and integration guide |
-| **IMPLEMENTATION_SUMMARY.md** | Architecture and design patterns |
-| **PROJECT_COMPLETE.md** | This completion report |
+| Document                      | Purpose                              |
+| ----------------------------- | ------------------------------------ |
+| **README.md**                 | Complete API reference with examples |
+| **QUICK_START.md**            | 30-second quick reference            |
+| **SETUP.md**                  | Detailed setup and integration guide |
+| **IMPLEMENTATION_SUMMARY.md** | Architecture and design patterns     |
+| **PROJECT_COMPLETE.md**       | This completion report               |
 
 ---
 
 ## Quality Metrics
 
-| Metric | Status |
-|--------|--------|
-| TypeScript Compilation | ✅ 0 errors |
-| ESLint | ✅ Configured |
-| Prettier | ✅ Configured |
-| Tests | ✅ 6/6 passing |
-| Type Coverage | ✅ 100% |
-| Documentation | ✅ Complete |
-| Build Output | ✅ Ready |
+| Metric                 | Status         |
+| ---------------------- | -------------- |
+| TypeScript Compilation | ✅ 0 errors    |
+| ESLint                 | ✅ Configured  |
+| Prettier               | ✅ Configured  |
+| Tests                  | ✅ 6/6 passing |
+| Type Coverage          | ✅ 100%        |
+| Documentation          | ✅ Complete    |
+| Build Output           | ✅ Ready       |
 
 ---
 
