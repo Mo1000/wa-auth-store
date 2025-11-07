@@ -1,7 +1,5 @@
 import type { AuthenticationState, SignalDataTypeMap } from '@whiskeysockets/baileys';
-import { initAuthCreds } from '@whiskeysockets/baileys/lib/Utils/auth-utils.js';
-import { BufferJSON } from '@whiskeysockets/baileys/lib/Utils/generics.js';
-import { proto } from '@whiskeysockets/baileys/WAProto/index.js';
+import { proto, BufferJSON, initAuthCreds } from '@whiskeysockets/baileys';
 import type { BaileysAuthStore } from '../core/BaileysAuthStore';
 import type { RedisMemoryConfig } from '../types/index.js';
 import { RedisMemoryManager } from '../managers/RedisMemoryManager.js';
@@ -143,7 +141,9 @@ export async function useBaileysAuthState(
           if (value) {
             // Special handling for app-state-sync-key
             if (type === 'app-state-sync-key') {
-              result[id] = proto.Message.AppStateSyncKeyData.create(value) as unknown as SignalDataTypeMap[typeof type];
+              result[id] = proto.Message.AppStateSyncKeyData.create(
+                value
+              ) as unknown as SignalDataTypeMap[typeof type];
             } else {
               result[id] = value as SignalDataTypeMap[typeof type];
             }
